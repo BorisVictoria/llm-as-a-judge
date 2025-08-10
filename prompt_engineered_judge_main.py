@@ -2,7 +2,7 @@ import streamlit as st
 from groq import Groq
 
 def clear_chat_history():
-    st.session_state["messages"] = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
 
 # Setup 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
@@ -17,9 +17,12 @@ with st.sidebar:
     st.button('Clear Chat History', on_click=clear_chat_history)
 
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
 
 for message in st.session_state["messages"]:
+    if message["role"] == "system":
+        with st.chat_message(message["role"], avatar="🦖"):
+            st.markdown(message["content"])
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 

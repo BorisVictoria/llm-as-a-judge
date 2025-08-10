@@ -1,45 +1,47 @@
 import streamlit as st
 from groq import Groq
 import json
-import time
+from tools import evaluate_translation_with_reflection
 
 def clear_chat_history():
-    st.session_state["messages"] = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
 
 # Tools
-def get_weather(city: str) -> dict:
-    # Simulate some processing time
-    time.sleep(0.5)
-    # Mock weather data
-    weather_data = {
-        "city": city,
-        "temperature": "72°F",
-        "condition": "Sunny",
-        "humidity": "45%",
-        "wind": "5 mph"
-    }
-    return weather_data
 
 tools = [{
     "type": "function",
     "function": {
-        "name": "get_weather",
-        "description": "Retrieve current weather information. Call this when the user asks about the weather.",
+        "name": "evaluate_translation",
+        "description": "Evaluate an English-to-Filipino translation with reflection loop. Always use this tool for evaluating English-to-Filipino translation pairs.",
         "parameters": {
             "type": "object",
-            "required": ["city"],
             "properties": {
-                "city": {
+                "source_en": {
                     "type": "string",
-                    "description": "Name of the city"
+                    "description": "English source text to be evaluated"
+                },
+                "candidate_fil": {
+                    "type": "string",
+                    "description": "Filipino translation candidate to be evaluated"
+                },
+                "reference_fil": {
+                    "type": "string",
+                    "description": "Optional Filipino reference translation",
+                    "default": ""
+                },
+                "domain_guidelines": {
+                    "type": "string",
+                    "description": "Optional domain-specific guidelines",
+                    "default": ""
                 }
-            }
+            },
+            "required": ["source_en", "candidate_fil"]
         }
     }
 }]
 
 tool_map = {
-    "get_weather": get_weather
+    "evaluate_translation": evaluate_translation_with_reflection
 }
 
 # Setup
@@ -59,11 +61,16 @@ with st.sidebar:
     show_tool_calls = st.checkbox("Show Tool Calls", value=True)
 
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How may I assist you today?"}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
 
 # Display chat history
 for message in st.session_state["messages"]:
     # Skip tool messages in the main display (we'll show them specially)
+    if message["role"] == "system":
+        with st.chat_message(message["role"], avatar="🦖"):
+            st.markdown(message["content"])
+            continue
+
     if message["role"] == "tool":
         continue
     
