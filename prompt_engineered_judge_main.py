@@ -23,7 +23,8 @@ SCORING RULE:
 
 OUTPUT:
 - Present your evaluation in a clear, well-structured way
-- You may format the result as a table
+- Format the result as a table
+- Don't use big headers.
 - Include:
     • Final score (1–5) and label ("excellent", "good", or "poor")
     • The score and explanation for each criterion
@@ -93,7 +94,7 @@ if user_input:
             stream = client.chat.completions.create(
                 model=model_types[0],
                 messages=st.session_state["messages"],
-                temperature=0.6,
+                temperature=0.2,
                 max_completion_tokens=4096,
                 top_p=1,
                 stream=True,
@@ -117,7 +118,7 @@ if user_input:
             completion = client.chat.completions.create(
                 model=model_types[0],
                 messages=st.session_state["messages"],
-                temperature=0.6,
+                temperature=0.2,
                 max_completion_tokens=4096,
                 top_p=1,
                 stream=False,

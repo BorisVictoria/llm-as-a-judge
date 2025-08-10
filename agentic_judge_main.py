@@ -2,9 +2,10 @@ import streamlit as st
 from groq import Groq
 import json
 from tools import evaluate_translation_with_reflection
+from tools import predict_translation_quality
 
 judge_prompt = """
-You are a translation quality judge for ENGLISH → FILIPINO translations.
+You are a translation quality judge for ENGLISH → FILIPINO translations. Always use the tools provided to help you evaluate more accurately.
 
 TASK:
 Evaluate one translation pair using the six criteria below:
@@ -24,8 +25,10 @@ SCORING RULE:
     - 0–2 → Score = 1 (Poor)
 
 OUTPUT:
+- Always use the tools provided to help you evaluate more accurately
 - Present your evaluation in a clear, well-structured way
 - You may format the result as a table
+- Start with the heading, Evaluation Summary
 - Include:
     • Final score (1–5) and label ("excellent", "good", or "poor")
     • The score and explanation for each criterion
@@ -33,7 +36,7 @@ OUTPUT:
     • A suggested fix if there are serious errors
     • Your confidence level (optional, 0–100)
 
-Be thorough but concise.
+Be thorough but concise. 
 """
 
 def clear_chat_history():
@@ -41,39 +44,60 @@ def clear_chat_history():
 
 # Tools
 tools = [{
-    "type": "function",
-    "function": {
-        "name": "evaluate_translation",
-        "description": "Evaluate an English-to-Filipino translation with reflection loop. Always use this tool for evaluating English-to-Filipino translation pairs.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "source_en": {
-                    "type": "string",
-                    "description": "English source text to be evaluated"
+        "type": "function",
+        "function": {
+            "name": "evaluate_translation",
+            "description": "Evaluate an English-to-Filipino translation with reflection loop. Always use this tool for evaluating English-to-Filipino translation pairs.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source_en": {
+                        "type": "string",
+                        "description": "English source text to be evaluated"
+                    },
+                    "candidate_fil": {
+                        "type": "string",
+                        "description": "Filipino translation candidate to be evaluated"
+                    },
+                    "reference_fil": {
+                        "type": "string",
+                        "description": "Optional Filipino reference translation",
+                        "default": ""
+                    },
+                    "domain_guidelines": {
+                        "type": "string",
+                        "description": "Optional domain-specific guidelines",
+                        "default": ""
+                    }
                 },
-                "candidate_fil": {
-                    "type": "string",
-                    "description": "Filipino translation candidate to be evaluated"
-                },
-                "reference_fil": {
-                    "type": "string",
-                    "description": "Optional Filipino reference translation",
-                    "default": ""
-                },
-                "domain_guidelines": {
-                    "type": "string",
-                    "description": "Optional domain-specific guidelines",
-                    "default": ""
-                }
-            },
-            "required": ["source_en", "candidate_fil"]
+                "required": ["source_en", "candidate_fil"]
+            }
         }
-    }
-}]
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "predict_translation_quality",
+            "description": "Predict translation quality using COMET-QE. Use this tool to determine if the English-to-Filipino translation is quality.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source_en": {"type": "string"},
+                    "candidate_fil": {"type": "string"},
+                    "model_name": {
+                        "type": "string",
+                        "default": "Unbabel/wmt20-comet-qe-da",
+                        "description": "COMET-QE model name"
+                    }
+                },
+                "required": ["source_en", "candidate_fil"]
+            }
+        }
+    }]
 
 tool_map = {
-    "evaluate_translation": evaluate_translation_with_reflection
+    "evaluate_translation": evaluate_translation_with_reflection,
+    "predict_translation_quality": predict_translation_quality
 }
 
 # Setup
@@ -153,7 +177,7 @@ if user_input:
                     stream = client.chat.completions.create(
                         model=model_types[0],
                         messages=st.session_state["messages"],
-                        temperature=0.6,
+                        temperature=0.0,
                         max_completion_tokens=4096,
                         top_p=1,
                         stream=True,
@@ -212,7 +236,7 @@ if user_input:
                     completion = client.chat.completions.create(
                         model=model_types[0],
                         messages=st.session_state["messages"],
-                        temperature=0.6,
+                        temperature=0.0,
                         max_completion_tokens=4096,
                         top_p=1,
                         stream=False,

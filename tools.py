@@ -1,6 +1,8 @@
 import streamlit as st
 from groq import Groq
 import json
+from comet import download_model, load_from_checkpoint
+import numpy as np
 
 def evaluate_translation_with_reflection(source_en, candidate_fil, reference_fil="", domain_guidelines=""):
     """
@@ -142,7 +144,7 @@ Reference (Filipino): "{reference_fil}"
 Domain Guidelines: "{domain_guidelines}"
 
 Provide your FINAL revised evaluation using the same JSON schema as before. Include a "revision_notes" field explaining what you changed and why.
-Return only raw JSON without any markdown code fences or syntax highlighting.
+Return only raw JSON without any markdown code fences or syntax highlighting. Make sure that the score match the sum_of_criteria. Recall that 5-6 -> 5, 3-4 -> 3, 0-2 -> 1.
 JSON_SCHEMA (same as before, plus):
 {{
   "score": integer,
@@ -180,3 +182,40 @@ JSON_SCHEMA (same as before, plus):
           return result
         except Exception as e:
            print(f"We encountered an error but we will try again kekw. {e}")
+
+def predict_translation_quality(
+    source_en: str, 
+    candidate_fil: str, 
+    model_name: str = "Unbabel/wmt20-comet-qe-da"
+) -> dict:
+    try:
+        # Download and load the model (cached after first run)
+        model_path = download_model(model_name)
+        model = load_from_checkpoint(model_path)
+        
+        # Prepare input data
+        data = [{"src": source_en, "mt": candidate_fil}]
+        
+        # Predict quality score
+        model_output = model.predict(data, batch_size=1, gpus=0)  # Use gpus=1 if available
+        
+        # Extract scores and convert to interpretable metrics
+        score = float(np.mean(model_output.scores))
+        return {
+            "comet_score": score,
+            "interpretation": interpret_comet_score(score),
+            "model": model_name,
+            "warnings": [] if score > 0.5 else ["Low quality detected"]
+        }
+    except Exception as e:
+        return {"error": str(e), "comet_score": None}
+    
+def interpret_comet_score(score: float) -> str:
+    if score >= 0.8:
+        return "Excellent (Likely indistinguishable from human translation)"
+    elif score >= 0.6:
+        return "Good (Minor errors, but meaning preserved)"
+    elif score >= 0.4:
+        return "Fair (Noticeable errors, but understandable)"
+    else:
+        return "Poor (Significant distortion or nonsense)"
