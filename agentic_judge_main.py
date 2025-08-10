@@ -48,7 +48,7 @@ tools = [{
         "type": "function",
         "function": {
             "name": "evaluate_translation",
-            "description": "Evaluate an English-to-Filipino translation with reflection loop. Always use this tool for evaluating English-to-Filipino translation pairs.",
+            "description": "Evaluate an English-to-Filipino translation with reflection loop. Always use this tool LAST for evaluating English-to-Filipino translation pairs.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -79,7 +79,7 @@ tools = [{
         "type": "function",
         "function": {
             "name": "predict_translation_quality",
-            "description": "Predict translation quality using COMET-QE. Use this tool FIRST to determine if the English-to-Filipino translation is quality.",
+            "description": "Predict translation quality using COMET-QE. Use this tool FIRST to have a secondary opinion if the English-to-Filipino translation is quality.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -99,7 +99,7 @@ tools = [{
         "type": "function",
         "function": {
             "name": "evaluate_style",
-            "description": "Evaluate style consistency between source and translation. Use this tool second to determine the correct tone for the translation.",
+            "description": "Evaluate style consistency between source and translation. Use this tool SECOND to determine the correct tone for the translation and the general guidelines for evaluating translation quality.",
             "parameters": {
                 "type": "object",
                 "properties": {
