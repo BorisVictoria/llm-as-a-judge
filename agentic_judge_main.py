@@ -3,11 +3,43 @@ from groq import Groq
 import json
 from tools import evaluate_translation_with_reflection
 
+judge_prompt = """
+You are a translation quality judge for ENGLISH → FILIPINO translations.
+
+TASK:
+Evaluate one translation pair using the six criteria below:
+1. Accuracy – Does the translation preserve the original meaning?
+2. Fluency – Is it grammatically correct and natural in Filipino?
+3. Coherence – Is the flow and structure logical in Filipino?
+4. Cultural Appropriateness – Does it fit the cultural and social context?
+5. Guideline Adherence – Does it follow any provided domain-specific rules?
+6. Completeness – Does it retain all important details from the source?
+
+SCORING RULE:
+- Each criterion: 0 points (fails) or 1 point (meets standard)
+- Add up the points (0–6 total)
+- Map the sum to a final score:
+    - 5–6 → Score = 5 (Excellent)
+    - 3–4 → Score = 3 (Good)
+    - 0–2 → Score = 1 (Poor)
+
+OUTPUT:
+- Present your evaluation in a clear, well-structured way
+- You may format the result as a table
+- Include:
+    • Final score (1–5) and label ("excellent", "good", or "poor")
+    • The score and explanation for each criterion
+    • Any notable highlights (problematic phrases or strong points)
+    • A suggested fix if there are serious errors
+    • Your confidence level (optional, 0–100)
+
+Be thorough but concise.
+"""
+
 def clear_chat_history():
     st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
 
 # Tools
-
 tools = [{
     "type": "function",
     "function": {
@@ -59,6 +91,7 @@ with st.sidebar:
     # Add streaming toggle
     streaming_enabled = st.checkbox("Enable Streaming", value=True)
     show_tool_calls = st.checkbox("Show Tool Calls", value=True)
+    append_judge_prompt = st.checkbox("Append Judge Prompt", value=False)
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
@@ -95,9 +128,14 @@ user_input = st.chat_input("Type your message here...")
 
 if user_input:
     # Add user message to session state and display
-    st.session_state["messages"].append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
+    if append_judge_prompt:
+        st.session_state["messages"].append({"role": "user", "content": judge_prompt + user_input})
+        with st.chat_message("user"):
+            st.markdown(judge_prompt + user_input)
+    else:
+        st.session_state["messages"].append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
     
     # Assistant response container
     with st.chat_message("assistant"):
