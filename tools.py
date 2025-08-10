@@ -219,3 +219,50 @@ def interpret_comet_score(score: float) -> str:
         return "Fair (Noticeable errors, but understandable)"
     else:
         return "Poor (Significant distortion or nonsense)"
+    
+def style_checker(
+    source_en: str,
+    candidate_fil: str,
+    style_guidelines: str = "The translation should maintain a formal, technical tone."
+) -> dict:
+
+    prompt = f"""
+    Analyze the style of the SOURCE (English) and TRANSLATION (Filipino) texts below.
+    Focus on:
+    1. Formality (formal, informal, neutral)
+    2. Tone (technical, conversational, persuasive)
+    3. Domain-appropriateness (e.g., medical, legal, casual)
+    4. Consistency between source and translation
+
+    GUIDELINES:
+    {style_guidelines}
+
+    SOURCE (English):
+    {source_en}
+
+    TRANSLATION (Filipino):
+    {candidate_fil}
+
+    Output a JSON with:
+    - "source_style": Formality, tone, domain
+    - "translation_style": Formality, tone, domain
+    - "consistency_score": 0-100 (how well styles match)
+    - "mismatches": List of style inconsistencies
+    - "suggestions": How to fix mismatches
+    """
+    
+    try:
+        client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+        response = client.chat.completions.create(
+            model="moonshotai/kimi-k2-instruct",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,  # Lower for more deterministic output
+            response_format={"type": "json_object"}  # Force JSON output
+        )
+        
+        # Parse LLM response
+        evaluation = json.loads(response.choices[0].message.content)
+        return evaluation
+    
+    except Exception as e:
+        return {"error": str(e)}

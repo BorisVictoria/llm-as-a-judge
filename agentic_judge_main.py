@@ -3,6 +3,7 @@ from groq import Groq
 import json
 from tools import evaluate_translation_with_reflection
 from tools import predict_translation_quality
+from tools import style_checker
 
 judge_prompt = """
 You are a translation quality judge for ENGLISH → FILIPINO translations. Always use the tools provided to help you evaluate more accurately.
@@ -78,7 +79,7 @@ tools = [{
         "type": "function",
         "function": {
             "name": "predict_translation_quality",
-            "description": "Predict translation quality using COMET-QE. Use this tool to determine if the English-to-Filipino translation is quality.",
+            "description": "Predict translation quality using COMET-QE. Use this tool FIRST to determine if the English-to-Filipino translation is quality.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -93,11 +94,32 @@ tools = [{
                 "required": ["source_en", "candidate_fil"]
             }
         }
-    }]
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "evaluate_style",
+            "description": "Evaluate style consistency between source and translation. Use this tool second to determine the correct tone for the translation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source_en": {"type": "string"},
+                    "candidate_fil": {"type": "string"},
+                    "style_guidelines": {
+                        "type": "string",
+                        "default": "The translation should maintain a formal, technical tone."
+                    }
+                },
+                "required": ["source_en", "candidate_fil"]
+            }
+        }
+    }
+    ]
 
 tool_map = {
     "evaluate_translation": evaluate_translation_with_reflection,
-    "predict_translation_quality": predict_translation_quality
+    "predict_translation_quality": predict_translation_quality,
+    "evaluate_style": style_checker,
 }
 
 # Setup
@@ -288,6 +310,7 @@ if user_input:
                         # Show tool result
                         if show_tool_calls:
                             with st.expander(f"📊 Tool Result: {tool_call_name}", expanded=True):
+                                st.write(full_response)
                                 st.json(tool_result)
                         
                         # Add tool response to messages
