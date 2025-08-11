@@ -36,7 +36,7 @@ Be thorough but concise.
 """
 
 def clear_chat_history():
-    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are a helpful assistant."}]
 
 # Setup
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
@@ -54,7 +54,7 @@ with st.sidebar:
     append_judge_prompt = st.checkbox("Append Judge Prompt", value=False)
 
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "system", "content": "You are Kimi, an AI assistant created by Moonshot AI."}]
+    st.session_state["messages"] = [{"role": "system", "content": "You are a helpful assistant."}]
 
 for message in st.session_state["messages"]:
     print(message)

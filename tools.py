@@ -282,6 +282,7 @@ I. General Translation Principles and Objectives
         ▪ Clear interpretation.
         ▪ Effective revitalisation of the original.
     ◦ Appropriateness means the translation is suitable for the context, language of the time, place, community, and target sector. For instance, "Magyosi Kadiri!" was deemed inappropriate in Visayas as "ka dirí" means "here" in Cebuano, resulting in a reversed meaning.
+    ◦ Honorifics such as "po", and "opo" are used to show respect to the elderly.
 II. Criteria for Literary Translation
 Literary translation involves playing with language and requires the translator to capture the "illocutionary power" of the original.
 1. Capturing Literary Devices and Wordplay:
